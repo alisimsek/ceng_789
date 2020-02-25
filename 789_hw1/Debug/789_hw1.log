@@ -1,0 +1,8 @@
+﻿  789_hw1.cpp
+c:\users\ali\source\repos\789_hw1\789_hw1\789_hw1.cpp(157): warning C4018: '<': signed/unsigned mismatch
+c:\users\ali\source\repos\789_hw1\789_hw1\789_hw1.cpp(167): warning C4018: '<': signed/unsigned mismatch
+c:\users\ali\source\repos\789_hw1\789_hw1\789_hw1.cpp(168): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+c:\users\ali\source\repos\789_hw1\789_hw1\789_hw1.cpp(173): warning C4018: '<': signed/unsigned mismatch
+c:\users\ali\source\repos\789_hw1\789_hw1\789_hw1.cpp(189): warning C4305: '=': truncation from 'int' to 'float'
+c:\users\ali\source\repos\789_hw1\789_hw1\789_hw1.cpp(232): warning C4305: '=': truncation from 'int' to 'float'
+  789_hw1.vcxproj -> C:\Users\Ali\source\repos\789_hw1\Debug\789_hw1.exe
