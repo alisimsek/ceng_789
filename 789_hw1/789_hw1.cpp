@@ -5,6 +5,7 @@
 #include <map>
 
 #include "Painter.h"
+#include "fibonacci.hpp"
 
 void drawThickEdges(SoSeparator*, Mesh*, std::vector<Edge*>);
 void dijkstra(Mesh*, int ,int);
@@ -13,8 +14,8 @@ void printDistToFile(FILE*, float* , int);
 
 std::vector< Edge* > sedges;
 bool fprintfEnabled = false;
-const char * outputFile = "M for horse0.txt";
-int ifArray = 0, ifMinHeap = 1;
+const char * outputFile = "M for man0.txt";
+int ifArray = 0, ifMinHeap =0;
 
 int main(int, char ** argv)
 {
@@ -136,42 +137,19 @@ float calculateDistance(Vertex* v1, Vertex* v2) {
 void dijkstra(Mesh* mesh, int v1, int v2)
 {
 	int size = mesh->verts.size();
-
-	float **graph = new float*[size];
-	for (int i = 0; i < size; i++) {
-		graph[i] = new float[size];
-	}
-	
 	int * parent = new int[size];
+	std::map<int, std::map<int, float>> myMap;
 
-	// use some other structure instead of double array which is mostly 0
-	std::map<int, std::map<int, int>> myMap;
-
+	// map structure used to create graph
 	for (int i = 0; i < size; i++) {
 
 		Vertex * v = mesh->verts[i];
 		std::vector<int> vertList = v->vertList;
-		for (int j = 0; j < size; j++) {
-			graph[i][j] = 0;
-		}
-		for (int j = 0; j < vertList.size(); j++) {
-			graph[i][vertList[j]] = calculateDistance(v, mesh->verts[vertList[j]]);
-		}
-	}
-
-	for (int i = 0; i < size; i++) {
-
-		Vertex * v = mesh->verts[i];
-		std::vector<int> vertList = v->vertList;
-		std::map<int, int> lengthMap;
+		std::map<int, float> lengthMap;
 		for (int j = 0; j < vertList.size(); j++) {
 			lengthMap[vertList[j]] = calculateDistance(v, mesh->verts[vertList[j]]);
 		}
 		myMap[i] = lengthMap;
-	}
-
-	for (int i = 0; i < myMap.size(); i++ ){
-		printf("size %d \n", myMap[i].size());
 	}
 
 
@@ -184,8 +162,7 @@ void dijkstra(Mesh* mesh, int v1, int v2)
 
 		for (int src = 0; src < size; src++) {
 
-			for (int i = 0; i < size; i++)
-			{
+			for (int i = 0; i < size; i++) {
 				dist[i] = INT_MAX;
 				sptSet[i] = false;
 			}
@@ -198,14 +175,18 @@ void dijkstra(Mesh* mesh, int v1, int v2)
 				int u = minDistance(dist, sptSet, size);
 				sptSet[u] = true;
 
-				for (int v = 0; v < size; v++)
+				int mapSize = myMap[u].size();
+				auto it = myMap[u].begin();
+				while (it != myMap[u].end()) {
 
-					if (!sptSet[v] && graph[u][v] &&
-						dist[u] + graph[u][v] < dist[v])
+					if (!sptSet[it->first] && dist[u] + it->second < dist[it->first])
 					{
-						parent[v] = u;
-						dist[v] = dist[u] + graph[u][v];
+						parent[it->first] = u;
+						dist[it->first] = dist[u] + it->second;
 					}
+
+					it++;
+				}
 			}
 
 			if (src == v1) {
@@ -224,13 +205,16 @@ void dijkstra(Mesh* mesh, int v1, int v2)
 	else {
 		parent[v1] = -1;
 
+		bool *sptSet = new bool[size];
+		for (int i = 0; i < size; i++) {
+			sptSet[i] = false;
+		}
+
 		if (ifArray) {
-			bool *sptSet = new bool[size];
 			float * dist = new float[size];
 			
 			for (int i = 0; i < size; i++) {
-				dist[i] = INT_MAX;
-				sptSet[i] = false;
+				dist[i] = std::numeric_limits<float>::infinity();
 			}
 
 			dist[v1] = 0;
@@ -240,47 +224,13 @@ void dijkstra(Mesh* mesh, int v1, int v2)
 				int u = minDistance(dist, sptSet, size);
 				sptSet[u] = true;
 
-				for (int v = 0; v < size; v++)
-
-					if (!sptSet[v] && graph[u][v] &&
-						dist[u] + graph[u][v] < dist[v])
-					{
-						parent[v] = u;
-						dist[v] = dist[u] + graph[u][v];
-					}
-			}
-
-			calculateThickEdges(mesh, parent, v1, v2);
-
-			delete[] dist;
-			delete[] sptSet;
-		} 
-		else if (ifMinHeap) {
-			std::priority_queue<int, std::vector<int>, std::greater<int> > pq;
-			std::vector<int> dist(size, INT_MAX);
-			pq.push(v1);
-			dist[v1] = 0;
-
-			bool *sptSet = new bool[size];
-			for (int i = 0; i < size; i++) {
-				sptSet[i] = false;
-			}
-
-			while (!pq.empty())
-			{
-				int u = pq.top();
-				pq.pop();
-				sptSet[u] = true;
-
-				int mapSize = myMap[u].size();
 				auto it = myMap[u].begin();
 				while (it != myMap[u].end()) {
-					
-					if ( dist[u] + it->second < dist[it->first])
+
+					if (!sptSet[it->first] && dist[u] + it->second < dist[it->first])
 					{
-						dist[it->first] = dist[u] + it->second;
 						parent[it->first] = u;
-						pq.push(it->first);
+						dist[it->first] = dist[u] + it->second;
 					}
 
 					it++;
@@ -288,18 +238,74 @@ void dijkstra(Mesh* mesh, int v1, int v2)
 			}
 
 			calculateThickEdges(mesh, parent, v1, v2);
-			delete[] sptSet;
-		}
-		else {
+			printf("%g \n", dist[v2]);
 
+			delete[] dist;
+		} 
+		else if (ifMinHeap) {
+			typedef std::pair<float, int> myPair;
+			std::priority_queue<myPair, std::vector<myPair>, std::greater<myPair> > pq;
+			std::vector<float> dist(size, std::numeric_limits<float>::infinity());
+			std::pair<float, int> p = std::make_pair(0, v1);
+			pq.push(p);
+			dist[v1] = 0;
+
+			while (!pq.empty())
+			{
+				int u = pq.top().second;
+				pq.pop();
+				sptSet[u] = true;
+
+				auto it = myMap[u].begin();
+				while (it != myMap[u].end()) {
+					
+					if (!sptSet[it->first] && dist[u] + it->second < dist[it->first])
+					{						
+						parent[it->first] = u;
+						dist[it->first] = dist[u] + it->second;
+						pq.push(std::make_pair(dist[it->first], it->first));
+					}
+
+					it++;
+				}
+			}
+
+			calculateThickEdges(mesh, parent, v1, v2);
+			printf("%g \n", dist[v2]);
+		}
+		else { // fibonacci heap
+			typedef std::pair<float, int> myPair;
+			FibonacciHeap<myPair> h;
+			std::vector<float> dist(size, std::numeric_limits<float>::infinity());
+			h.insert(std::make_pair(0, v1));
+			dist[v1] = 0;
+
+			while (!h.isEmpty())
+			{
+				int u = h.removeMinimum().second;
+				sptSet[u] = true;
+
+				auto it = myMap[u].begin();
+				while (it != myMap[u].end()) {
+
+					if (!sptSet[it->first] &&  dist[u] + it->second < dist[it->first])
+					{
+						parent[it->first] = u;
+						dist[it->first] = dist[u] + it->second;
+						h.insert(std::make_pair(dist[it->first], it->first));
+					}
+
+					it++;
+				}
+			}
+
+			calculateThickEdges(mesh, parent, v1, v2);
+			printf("%g \n", dist[v2]);
 		}
 
+		delete[] sptSet;
 	}
 	
 	delete[] parent;
-	for (int i = 0; i < size; i++) {
-		delete[] graph[i];
-	}
-	delete[] graph;
 	
 }

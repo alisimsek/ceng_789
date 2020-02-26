@@ -159,6 +159,7 @@
     <ClCompile Include="Painter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="fibonacci.hpp" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Painter.h" />
   </ItemGroup>
